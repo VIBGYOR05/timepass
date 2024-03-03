@@ -1,0 +1,403 @@
+package pz3;
+import java.util.Scanner;
+
+public class crc {
+	private static String datastream;
+	private static String generator = "10011";
+	
+	public static void main(String[] args)
+	{
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter the data at sender side");
+		datastream = sc.next();
+		int datalen = datastream.length();
+		int genlen = generator.length();
+		int[] data = new int[datalen+genlen-1];
+		int[] codeword = new int[datalen+genlen-1];
+		int[] div = new int[genlen];
+		
+		for(int i=0;i<datalen;i++)
+		{
+			data[i] = Integer.parseInt(datastream.charAt(i)+"");
+		}
+		
+		for(int i=0;i<genlen;i++)
+		{
+			div[i] = Integer.parseInt(generator.charAt(i)+"");
+		}
+		
+		codeword = calculatecrc(data,div,datalen);
+		
+		for(int i=0;i<datalen;i++)
+		{
+			codeword[i]= Integer.parseInt(datastream.charAt(i)+"");
+		}
+		
+		System.out.println("codeword generated is ");
+		
+		for(int i=0;i<codeword.length;i++)
+		{
+			System.out.print(codeword[i]);
+		}
+		
+		System.out.println("Enter the data at receiver side");
+		
+		datastream = sc.next();
+		data = new int[datastream.length()+generator.length()-1];
+		
+		for(int i=0;i<datastream.length();i++)
+		{
+			data[i] = Integer.parseInt(datastream.charAt(i)+"");
+		}
+		codeword = calculatecrc(data,div,datastream.length());
+		
+		boolean valid = true;
+		
+		for(int i=0;i<codeword.length;i++)
+		{
+			if(codeword[i]==1)
+			{
+				valid = false;
+			}
+		}
+		
+		if(valid==true)
+		{
+			System.out.println("no error");
+		}
+		
+		else
+		{
+			System.out.println("error");
+		}
+		
+	}
+	
+	private static int[] calculatecrc(int[] divrem, int[] divisor, int length)
+	{
+		for(int i=0;i<length;i++)
+		{
+			if(divrem[i]==1)
+			{
+				for(int j=0;j<divisor.length;j++)
+				{
+					divrem[i+j] ^= divisor[j];
+				}
+			}
+		}
+		return divrem;
+	}
+}
+
+
+**************************************************************************************
+
+package pz3;
+import java.util.Scanner;
+
+public class bellmanford {
+
+	private static int num_vertices;
+	private static int[] distances;
+	public static final int max_value =999;
+	
+	public bellmanford(int num_vertices)
+	{
+		this.num_vertices= num_vertices;
+		distances = new int[num_vertices+1];
+	}
+	
+	public void bellmanEvaluate(int[][] adjacencyMatrix, int source)
+	{
+		for(int node=1;node<=num_vertices;node++)
+		{
+			distances[node]=max_value;
+		}
+		
+		distances[source]=0;
+		
+		for(int node=1;node<=num_vertices-1;node++)
+		{
+			for(int sourcenode=1;sourcenode<=num_vertices;sourcenode++)
+			{
+				for(int destination=1;destination<=num_vertices;destination++)
+				{
+					if(adjacencyMatrix[sourcenode][destination]!=max_value)
+					{
+						if(distances[destination]>distances[sourcenode]+adjacencyMatrix[sourcenode][destination])
+						{
+							distances[destination]=distances[sourcenode]+adjacencyMatrix[sourcenode][destination];
+						}
+					}
+				}
+			}
+		}
+		
+		for(int sourcenode=1;sourcenode<=num_vertices;sourcenode++)
+		{
+			for(int destination=1;destination<=num_vertices;destination++)
+			{
+				if(distances[destination]>distances[sourcenode]+adjacencyMatrix[sourcenode][destination])
+				{
+					System.out.println("graph contains a negative edge cycle");
+				}
+			}
+		}
+		
+		for(int vertex=1;vertex<=num_vertices;vertex++)
+		{
+			System.out.println("distance of vertex "+vertex +" from source "+source +" is "+distances[vertex]);
+		}
+	}
+	
+	public static void main(String[] args) {
+		
+		int num_vertices;
+		int source=0;
+		
+		System.out.println("Enter the number of vertices");
+		Scanner sc = new Scanner(System.in);
+		num_vertices = sc.nextInt();
+		
+		int[][] adjacencyMatrix = new int[num_vertices+1][num_vertices+1];
+		
+		for(int sourcenode=1;sourcenode<=num_vertices;sourcenode++)
+		{
+			for(int destination=1; destination<=num_vertices;destination++)
+			{
+				adjacencyMatrix[sourcenode][destination] = sc.nextInt();
+				
+				if(sourcenode==destination)
+				{
+					adjacencyMatrix[sourcenode][destination] = 0;
+					continue;
+				}
+				
+				if(adjacencyMatrix[sourcenode][destination]==0)
+				{
+					adjacencyMatrix[sourcenode][destination]=max_value;
+				}
+			}
+		}
+		
+		System.out.println("enter source");
+		source = sc.nextInt();
+		bellmanford bell = new bellmanford(num_vertices);
+		bell.bellmanEvaluate(adjacencyMatrix, source);
+		
+		
+	}
+}
+
+
+******************************************************************************************************
+
+package pz3;
+import java.util.Scanner;
+
+public class leakybucket {
+	
+	private static int buck_size,incoming,outgoing,n,time=1,store=0;
+	
+	public static void main(String[] args)
+	{
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter buck_size, outgoing,n");
+		buck_size = sc.nextInt();
+		outgoing = sc.nextInt();
+		n = sc.nextInt();
+		
+		while(n!=0)
+		{
+			System.out.println("Enter the number of incoming packets at time "+(time++));
+			incoming = sc.nextInt();
+			
+			if(incoming<=buck_size-store)
+			{
+				store = store + incoming;
+			}
+			
+			else
+			{
+				int pktdrop = incoming-buck_size+store;
+				System.out.println("number of packets dropped are "+pktdrop);
+				store = buck_size;
+			}
+			
+			store = store - outgoing;
+			
+			if(store<0)
+			{
+				System.out.println("empty buffer");
+				store =0;
+			}
+			
+			System.out.println("number of packets left in buffer of size "+buck_size+" are "+store);
+			
+			n--;
+		}
+	}
+}
+
+
+*********************************************************************************************************
+
+package pz3;
+import java.util.Scanner;
+import java.util.Random;
+import java.math.BigInteger;
+
+public class rsa {
+	
+	private static BigInteger p,q,N,phi,e,d;
+	private static int bitLength =1024;
+	public Random r = new Random();
+	
+	public rsa()
+	{
+		p = BigInteger.probablePrime(bitLength, r);
+		q = BigInteger.probablePrime(bitLength, r);
+		
+		System.out.println("prime number p is "+p);
+		System.out.println("prime number q is "+q);
+		
+		N = p.multiply(q);
+		
+		phi = p.subtract(BigInteger.ONE).multiply(q.subtract(BigInteger.ONE));
+		
+		e = BigInteger.probablePrime(bitLength/2, r);
+		
+		while(e.gcd(phi).compareTo(BigInteger.ONE)>0 && e.compareTo(phi)<0)
+		{
+			e =e.add(BigInteger.ONE);
+		}
+		
+		d = e.modInverse(phi);
+	}
+	
+	public byte[] encrypt( byte[] message)
+	{
+		return new BigInteger(message).modPow(e,N).toByteArray();
+	}
+	
+	public byte[] decrypt(byte[] message)
+	{
+		return new BigInteger(message).modPow(d, N).toByteArray();
+	}
+	
+	public static void main(String[] args)
+	{
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter the message");
+		String testString = sc.next();
+		System.out.println("original message is "+testString);
+		
+		rsa rsa2 = new rsa();
+		byte[] encrypted = rsa2.encrypt(testString.getBytes());
+		System.out.println("encrypted message is "+ new BigInteger(1,encrypted).toString(16));
+		byte[] decrypted = rsa2.decrypt(encrypted);
+		System.out.println("decrypted message is "+new String(decrypted));
+	}
+}
+
+************************************************************************************************************
+
+package pz3;
+import java.io.*;
+import java.net.*;
+
+public class FileServer {
+
+	public static void main(String[] args)
+	{
+		new FileServer();
+	}
+	
+	public FileServer()
+	{
+		try
+		{
+			ServerSocket serversocket = new ServerSocket(8000);
+			System.out.println("Server started");
+			Socket socket = serversocket.accept();
+			
+			DataInputStream input = new DataInputStream(socket.getInputStream());
+			DataOutputStream output = new DataOutputStream(socket.getOutputStream());
+			
+			String str = input.readUTF();
+			System.out.println("requested file "+str);
+			
+			String everything;
+			
+			try
+			{
+				InputStream in = new FileInputStream(str);
+				BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+				StringBuilder out = new StringBuilder();
+				String line;
+				
+				while((line = reader.readLine())!=null)
+				{
+					out.append(line + "\n");
+				}
+				
+				everything = out.toString();
+			}
+			
+			catch(Exception ex)
+			{
+				everything = "file not found";
+			}
+			
+			output.writeUTF(everything);
+		}
+		
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+}
+
+
+***************************************************************************************************
+
+package pz3;
+import java.io.*;
+import java.net.*;
+
+public class FileClient {
+	public static void main(String[] args)
+	{
+		new FileClient();
+	}
+	
+	public FileClient()
+	{
+		BufferedReader bufreader = new BufferedReader(new InputStreamReader(System.in));
+		
+		try
+		{
+			System.out.println("Enter server ip address");
+			String saddr = bufreader.readLine();
+			Socket ClientSocket = new Socket(saddr,8000);
+			
+			DataInputStream input = new DataInputStream(ClientSocket.getInputStream());
+			DataOutputStream output = new DataOutputStream(ClientSocket.getOutputStream());
+			
+			System.out.println("Enter file name");
+			String name = bufreader.readLine();
+			output.writeUTF(name);
+			
+			String echoedfile = input.readUTF();
+			
+			System.out.println("Content of the file is "+ echoedfile);
+			
+		}
+		
+		catch(Exception ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+}
